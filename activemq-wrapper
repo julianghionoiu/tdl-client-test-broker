@@ -1,0 +1,50 @@
+#!/bin/bash
+
+SCRIPT_FOLDER="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CACHE_FOLDER="${SCRIPT_FOLDER}/.cache"
+CONF_FOLDER="${SCRIPT_FOLDER}/conf"
+mkdir -p "${CACHE_FOLDER}"
+
+function echo_error() { echo "$@" 1>&2; }
+function exit_error() { echo_error "ERROR - $@"; exit 1; }
+
+# Load $BROKER_VERSION and $DESTINATION_URL from properties file
+. ${SCRIPT_FOLDER}/activemq-wrapper.properties
+echo "Requiring ActiveMq version: $BROKER_VERSION"
+
+# This is the executable
+activemq_bin="${CACHE_FOLDER}/${BROKER_VERSION}/bin/activemq"
+
+# Ensure that the required version is stored in local cache
+if [ ! -f "${activemq_bin}" ]; then
+    downloaded_artifact="${CACHE_FOLDER}/last_download.tar.gz"
+    echo "artifact: ${downloaded_artifact}"
+
+    echo "Version not found in local cache. Downloading from: ${DESTINATION_URL}"
+    curl -sS -o "${downloaded_artifact}" -L "${DESTINATION_URL}"
+    if [ ! $? -eq 0 ]; then
+        exit_error "Failed to download ActiveMq broker"
+    fi
+    
+    # Extract to folder
+    tar -xvf "${downloaded_artifact}" -C "${CACHE_FOLDER}" --transform 's/apache-activemq-//'
+fi
+
+# Ensure executable
+chmod u+x "${activemq_bin}"
+
+# Wrap the activemq broker commands
+echo "Execute: ${activemq_bin}"
+conf_file="${CONF_FOLDER}/activemq.xml"
+EXTRA_OPTS="xbean:file:${conf_file}"
+if [ "$1" == "stop" ]; then
+   EXTRA_OPTS=""
+fi
+
+# Retrieve JMX options. ACTIVEMQ_OPTS is being used by the activemq_bin
+JMX_HOST=`cat ${conf_file} | grep -oe "connectorHost=[^ ]*" | cut -d "\"" -f2`
+JMX_PORT=`cat ${conf_file} | grep -oe "connectorPort=[^ ]*" | cut -d "\"" -f2`
+export ACTIVEMQ_OPTS="-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://${JMX_HOST}:${JMX_PORT}/jmxrmi"
+
+# Run
+${activemq_bin} "$@" "${EXTRA_OPTS}"
