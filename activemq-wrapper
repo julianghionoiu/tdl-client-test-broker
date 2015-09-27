@@ -13,7 +13,8 @@ function exit_error() { echo_error "ERROR - $@"; exit 1; }
 echo "Requiring ActiveMq version: $BROKER_VERSION"
 
 # This is the executable
-activemq_bin="${CACHE_FOLDER}/${BROKER_VERSION}/bin/activemq"
+activemq_home="${CACHE_FOLDER}/${BROKER_VERSION}"
+activemq_bin="${activemq_home}/bin/activemq"
 
 # Ensure that the required version is stored in local cache
 if [ ! -f "${activemq_bin}" ]; then
@@ -48,3 +49,30 @@ export ACTIVEMQ_OPTS="-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://${JMX_HOS
 
 # Run
 ${activemq_bin} "$@" "${EXTRA_OPTS}"
+
+
+# Wait for the web console to come up
+function wait_until_port_is_open() {
+   port=$1
+   delay=5
+   n=0
+   until [ $n -ge 5 ]
+   do
+     echo  "Is application listening on port $port ? "
+     lsof -P -i TCP:${port} > /dev/null
+     if [ $? -eq 0 ]; then
+        echo "Yes"
+        break
+     fi
+     echo "No. Retrying in $delay seconds."
+
+     n=$[$n+1]
+     sleep $delay
+   done
+}
+
+# Only on start
+if [ "$1" == "start" ]; then
+   admin_port=`cat ${CONF_FOLDER}/jetty.xml  | grep "\"port\"" | head -n 1 | cut -d "\"" -f 4`
+   wait_until_port_is_open ${admin_port}
+fi
