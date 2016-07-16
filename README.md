@@ -8,13 +8,13 @@ export BROKER_LOCATION=./broker/
 export BROKER_VERSION=master
 
 # Checkout
-git submodule add git@github.com:julianghionoiu/tdl-client-test-broker.git $SPEC_LOCATION
+git submodule add git@github.com:julianghionoiu/tdl-client-test-broker.git $BROKER_LOCATION
 git submodule update --init
 
 # Switch to tag
 pushd . 
 cd $BROKER_LOCATION
-git checkout $BROKER_LOCATION
+git checkout $BROKER_VERSION
 popd
 
 # Commit
