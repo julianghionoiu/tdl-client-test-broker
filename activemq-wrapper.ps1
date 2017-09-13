@@ -7,8 +7,7 @@ $ScriptFolder = (Get-Item -Path ".\" -Verbose).FullName
 $CacheFolder = "$($ScriptFolder)/.cache"
 $ConfFolder = "$($ScriptFolder)/conf"
 
-if (-Not (Test-Path $CacheFolder))
-{
+if (-Not (Test-Path $CacheFolder)) {
 	New-Item -ItemType directory -Path $CacheFolder
 }
 
@@ -20,22 +19,20 @@ $ActiveMqHome = "$($CacheFolder)/apache-activemq-$($ActiveMqProps.BROKER_VERSION
 $ActiveMqBin = "$($ActiveMqHome)/bin/activemq.bat"
 
 # Ensure that the required version is stored in local cache
-if (-Not (Test-Path $ActiveMqBin))
-{
+if (-Not (Test-Path $ActiveMqBin)) {
 	$DownloadedArtifact = "$($CacheFolder)/last_download.zip"
     Write-Host "Artifact: $($DownloadedArtifact)"
 
-    Write-Host "Version not found in local cache. Downloading from: $($ActiveMqProps.DESTINATION_URL_WIN)"
+    Write-Host "Version not found in local cache. Downloading from: $($ActiveMqProps.DESTINATION_URL)"
 
     $WebClient = New-Object System.Net.WebClient
-	$WebClient.DownloadFile($ActiveMqProps.DESTINATION_URL_WIN, $DownloadedArtifact)
+	$WebClient.DownloadFile($ActiveMqProps.DESTINATION_URL, $DownloadedArtifact)
 
 	Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 	[System.IO.Compression.ZipFile]::ExtractToDirectory($DownloadedArtifact, $CacheFolder)
 }
-else
-{
+else {
 	Write-Host "Version found in local cache."
 }
 
@@ -46,16 +43,50 @@ $ConfFile = "$($ConfFolder)/activemq.xml"
 
 $ExtraOpts = "xbean:$([System.Uri]"file://$($ConfFile)")"
 
-if ($Command -eq "stop")
-{
+if ($Command -eq "stop") {
    $ExtraOpts = ""
 }
 
-# TODO
 # Retrieve JMX options. ACTIVEMQ_OPTS is being used by the activemq_bin
-#JMX_HOST=`cat ${conf_file} | grep -oe "connectorHost=[^ ]*" | cut -d "\"" -f2`
-#JMX_PORT=`cat ${conf_file} | grep -oe "connectorPort=[^ ]*" | cut -d "\"" -f2`
+[xml] $ConfXml = Get-Content $ConfFile
+$ManagementContext = $ConfXml.beans.broker.managementContext.managementContext;
+$JmxHost = $ManagementContext.connectorHost
+$JmxPort = $ManagementContext.connectorPort
 #export ACTIVEMQ_OPTS="-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://${JMX_HOST}:${JMX_PORT}/jmxrmi"
 
 # Run
 Start-Process cmd -ArgumentList "/k $($ActiveMqBin) $($Command) $($ExtraOpts)"
+
+function Wait-Until-Port-Is-Open {
+	param (
+		[string]$port
+	)
+	
+	$delay = 5
+	$n = 0
+	
+	do {
+		Write-Host "Is application listening on port $($port)?"
+		$Test = Test-NetConnection -ComputerName localhost -Port $JettyPort
+		if ($Test.TcpTestSucceeded) {
+			Write-Host "Yes"
+			break
+		}
+		else {
+			Write-Host "No. Retrying in $($delay) seconds."
+		}
+		
+		$n = $n + 1
+		Start-Sleep -s $delay
+	}
+	while ($n -lt 5)
+}
+
+# Only on start
+if ($Command -eq "start") {
+	[xml] $JettyXml = Get-Content "$($ConfFolder)/jetty.xml"
+	$JettyPort = ($JettyXml.beans.bean.property | ? {$_.name -eq "port"}).value
+	Wait-Until-Port-Is-Open($JettyPort)
+}
+
+
