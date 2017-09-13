@@ -43,7 +43,8 @@ else
 Write-Host "Execute: $($ActiveMqBin)"
 
 $ConfFile = "$($ConfFolder)/activemq.xml"
-$ExtraOpts = "xbean:file:$($ConfFile)"
+
+$ExtraOpts = "xbean:$([System.Uri]"file://$($ConfFile)")"
 
 if ($Command -eq "stop")
 {
