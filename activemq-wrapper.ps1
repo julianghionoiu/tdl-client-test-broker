@@ -45,17 +45,16 @@ Write-Host "Execute: $($ActiveMqBin)"
 $ConfFile = "$($ConfFolder)/activemq.xml"
 $ExtraOpts = "xbean:file:$($ConfFile)"
 
-#if ($Command == "stop") {
-#   $ExtraOpts = ""
-#}
+if ($Command -eq "stop")
+{
+   $ExtraOpts = ""
+}
 
+# TODO
 # Retrieve JMX options. ACTIVEMQ_OPTS is being used by the activemq_bin
 #JMX_HOST=`cat ${conf_file} | grep -oe "connectorHost=[^ ]*" | cut -d "\"" -f2`
 #JMX_PORT=`cat ${conf_file} | grep -oe "connectorPort=[^ ]*" | cut -d "\"" -f2`
 #export ACTIVEMQ_OPTS="-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://${JMX_HOST}:${JMX_PORT}/jmxrmi"
 
 # Run
-#$ActiveMqBin "$@" "$($ExtraOpts)"
-
-# Test run
-Start-Process $ActiveMqBin $Command
+Start-Process cmd -ArgumentList "/k $($ActiveMqBin) $($Command) $($ExtraOpts)"
