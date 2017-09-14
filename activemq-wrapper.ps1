@@ -52,7 +52,7 @@ if ($Command -eq "stop") {
 $ManagementContext = $ConfXml.beans.broker.managementContext.managementContext;
 $JmxHost = $ManagementContext.connectorHost
 $JmxPort = $ManagementContext.connectorPort
-#export ACTIVEMQ_OPTS="-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://${JMX_HOST}:${JMX_PORT}/jmxrmi"
+$env:ACTIVEMQ_OPTS = "-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://$($JmxHost):$($JmxPort)/jmxrmi"
 
 # Run
 Start-Process cmd -ArgumentList "/k $($ActiveMqBin) $($Command) $($ExtraOpts)"
@@ -88,5 +88,3 @@ if ($Command -eq "start") {
 	$JettyPort = ($JettyXml.beans.bean.property | ? {$_.name -eq "port"}).value
 	Wait-Until-Port-Is-Open($JettyPort)
 }
-
-
