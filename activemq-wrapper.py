@@ -37,16 +37,39 @@ def download_and_show_progress(url, file_name):
 
 
 def wait_until_port_is_open(port, delay):
+    print "hit wait_until_port_is_open"
     n = 0
     while n < 5:
         print "Is application listening on port " + str(port) + "? "
-        returncode = subprocess.call("lsof", "-P", "-i", "TCP:" + str(port), ">", "/dev/null")
+        returncode = subprocess.call("lsof -P -i TCP:" + str(port) + " > /dev/null", shell=True)
         if returncode == 0:
             print "Yes"
             return
-        print "No. Retrying in " + str(delay) + "seconds"
+        print "No. Retrying in " + str(delay) + " seconds"
         n = n + 1
         time.sleep(delay)
+
+
+def parse_activemq_xml(conf_file):
+    tree = ET.ElementTree(file=conf_file)
+    root = tree.getroot()
+
+    for managementContext in root.findall('.//{http://activemq.apache.org/schema/core}managementContext'):
+        if "connectorHost" in managementContext.attrib:
+            jmx_host = managementContext.attrib.get("connectorHost")
+            jmx_port = managementContext.attrib.get("connectorPort")
+            return "-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://" + jmx_host + ":" + jmx_port + "/jmxrmi"
+
+
+def parse_jetty_xml(jetty_xml):
+    tree = ET.parse(jetty_xml)
+    root = tree.getroot()
+
+    for bean in root.findall('.//{http://www.springframework.org/schema/beans}bean'):
+        if bean.get("id") == "jettyPort":
+            for prop in bean.findall(".//{http://www.springframework.org/schema/beans}property"):
+                if prop.get("name") == "port":
+                    return prop.get("value")
 
 
 def main(command):
@@ -61,6 +84,7 @@ def main(command):
         downloaded_artifact = os.path.join(CACHE_FOLDER, "last_download.tar.gz")
         print "artifact: " + downloaded_artifact
         print "Version not found in local cache. Downloading from: " + DESTINATION_URL
+
         download_and_show_progress(DESTINATION_URL, downloaded_artifact)
         subprocess.call(["tar", "-xvf", downloaded_artifact, "-C", CACHE_FOLDER, "--transform", "s/apache-activemq-//"])
 
@@ -72,28 +96,14 @@ def main(command):
     if command == "stop":
         extra_opts = ""
 
-    tree = ET.parse(conf_file)
-    root = tree.getroot()
-
-    for managementContext in root.iter('managementContext'):
-        jmx_host = managementContext.attrib.connectorHost
-        jmx_port = managementContext.attrib.connectorPort
-        activemq_opts = "-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://" + jmx_host + ":" + jmx_port + "/jmxrmi"
-        os.system("export ACTIVEMQ_OPTS=\"" + activemq_opts + "\"")
-
-    print activemq_bin + " " + command + " " + extra_opts
+    activemq_opts = parse_activemq_xml(conf_file)
+    os.system("export ACTIVEMQ_OPTS=\"" + activemq_opts + "\"")
     os.system(activemq_bin + " " + command + " " + extra_opts)
 
     if command == "start":
         jetty_xml = os.path.join(CONF_FOLDER, "jetty.xml")
-        tree = ET.parse(jetty_xml)
-        root = tree.getroot()
-        for bean in root.iter("bean"):
-            if bean.id == "jettyPort":
-                for prop in bean.iter("property"):
-                    if prop.name == "port":
-                        admin_port = prop.value
-                        wait_until_port_is_open(admin_port)
+        admin_port = parse_jetty_xml(jetty_xml)
+        wait_until_port_is_open(admin_port, 5)
 
 
 if __name__ == "__main__":
