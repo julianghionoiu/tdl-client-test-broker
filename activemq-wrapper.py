@@ -37,7 +37,7 @@ def main(command_word):
 
     print "Requiring ActiveMq version: " + broker_version
     activemq_home = os.path.join(CACHE_FOLDER, broker_version)
-    activemq_bin = os.path.join(activemq_home, "bin/activemq")
+    activemq_bin = os.path.join(activemq_home, "bin", "activemq")
 
     if not os.path.isfile(activemq_bin):
         downloaded_artifact = os.path.join(CACHE_FOLDER, "last_download.tar.gz")
@@ -92,7 +92,11 @@ def download_and_show_progress(url, file_name):
         status = status + chr(8) * (len(status) + 1)
         print status,
 
+    # Force flush the file to ensure it is written
+    f.flush()
+    os.fsync(f.fileno())
     f.close()
+
 
 
 def parse_activemq_xml(conf_file):
