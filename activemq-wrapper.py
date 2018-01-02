@@ -62,14 +62,19 @@ def main(command_word):
     if command_word == "stop":
         extra_opts = ""
 
-    activemq_opts = parse_activemq_xml(conf_file)
-    os.system("export ACTIVEMQ_OPTS=\"" + activemq_opts + "\"")
-    os.system(activemq_bin + " " + command_word + " " + extra_opts)
+    execute({'ACTIVEMQ_OPTS': parse_activemq_xml(conf_file)},
+            [activemq_bin, command_word, extra_opts])
 
     if command_word == "start":
         jetty_xml = os.path.join(CONF_FOLDER, "jetty.xml")
         admin_port = parse_jetty_xml(jetty_xml)
         wait_until_port_is_open(admin_port, 5)
+
+
+def execute(my_env, command):
+    env_copy = os.environ.copy()
+    env_copy.update(my_env)
+    subprocess.Popen(command, env=env_copy)
 
 
 def extract_archive(archive, to_folder):
