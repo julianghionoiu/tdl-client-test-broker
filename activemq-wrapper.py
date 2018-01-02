@@ -70,6 +70,7 @@ def main(command_word):
         jetty_xml = os.path.join(CONF_FOLDER, "jetty.xml")
         admin_port = parse_jetty_xml(jetty_xml)
         wait_until_port_is_open(admin_port, 5)
+        proc.terminate()
 
     proc.wait()
     sys.exit()
