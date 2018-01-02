@@ -45,6 +45,7 @@ def main(command_word):
         print "Version not found in local cache. Downloading from: " + destination_url
 
         download_and_show_progress(destination_url, downloaded_artifact)
+        print "The contents of the cache folder: " + os.listdir(CACHE_FOLDER)
 
         # Extract
         tar = tarfile.open(downloaded_artifact)
@@ -96,7 +97,6 @@ def download_and_show_progress(url, file_name):
     f.flush()
     os.fsync(f.fileno())
     f.close()
-
 
 
 def parse_activemq_xml(conf_file):
