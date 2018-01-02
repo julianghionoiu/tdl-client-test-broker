@@ -7,6 +7,7 @@ import sys
 import urllib2
 import socket
 import platform
+import tarfile
 
 
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__))
@@ -44,7 +45,14 @@ def main(command_word):
         print "Version not found in local cache. Downloading from: " + destination_url
 
         download_and_show_progress(destination_url, downloaded_artifact)
-        subprocess.call(["tar", "-xvf", downloaded_artifact, "-C", CACHE_FOLDER, "--transform", "s/apache-activemq-//"])
+
+        # Extract
+        tar = tarfile.open(downloaded_artifact)
+        tar.extractall(CACHE_FOLDER)
+        tar.close()
+
+        # Rename folder
+        os.rename(os.path.join(CACHE_FOLDER, "apache-activemq-"+broker_version), activemq_home)
 
     os.chmod(activemq_bin, 0x755)
     print "Execute: " + activemq_bin
