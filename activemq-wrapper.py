@@ -8,6 +8,7 @@ import urllib2
 import socket
 import platform
 import tarfile
+import zipfile
 
 
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__))
@@ -40,7 +41,8 @@ def main(command_word):
     activemq_bin = os.path.join(activemq_home, "bin", "activemq")
 
     if not os.path.isfile(activemq_bin):
-        downloaded_artifact = os.path.join(CACHE_FOLDER, "last_download.tar.gz")
+        downloaded_file_name=destination_url[destination_url.rfind("/")+1:]
+        downloaded_artifact = os.path.join(CACHE_FOLDER, downloaded_file_name)
         print "artifact: " + downloaded_artifact
         print "Version not found in local cache. Downloading from: " + destination_url
 
@@ -48,11 +50,7 @@ def main(command_word):
         print "The contents of the cache folder: " + ', '.join(os.listdir(CACHE_FOLDER))
 
         # Extract
-        tar = tarfile.open(downloaded_artifact)
-        tar.extractall(CACHE_FOLDER)
-        tar.close()
-
-        # Rename folder
+        extract_archive(downloaded_artifact, CACHE_FOLDER)
         os.rename(os.path.join(CACHE_FOLDER, "apache-activemq-"+broker_version), activemq_home)
 
     os.chmod(activemq_bin, 0x755)
@@ -71,6 +69,17 @@ def main(command_word):
         jetty_xml = os.path.join(CONF_FOLDER, "jetty.xml")
         admin_port = parse_jetty_xml(jetty_xml)
         wait_until_port_is_open(admin_port, 5)
+
+
+def extract_archive(archive, to_folder):
+    if archive.endswith("zip"):
+        zip_ref = zipfile.ZipFile(archive, 'r')
+        zip_ref.extractall(to_folder)
+        zip_ref.close()
+    else:
+        tar = tarfile.open(archive)
+        tar.extractall(to_folder)
+        tar.close()
 
 
 def download_and_show_progress(url, file_name):
