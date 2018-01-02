@@ -57,7 +57,8 @@ def main(command_word):
     print "Execute: " + activemq_bin
     conf_file = os.path.join(CONF_FOLDER, "activemq.xml")
 
-    extra_opts = "xbean:file:" + conf_file
+    conf_file_java_uri = conf_file.replace("\\", "/")
+    extra_opts = "xbean:file:" + conf_file_java_uri
     if command_word == "stop":
         extra_opts = ""
 
