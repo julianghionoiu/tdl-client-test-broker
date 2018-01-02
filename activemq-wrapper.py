@@ -33,8 +33,10 @@ def main(command_word):
     broker_version = "5.11.1"
     if "Windows" in platform.system():
         destination_url = "http://archive.apache.org/dist/activemq/5.11.1/apache-activemq-5.11.1-bin.zip"
+        is_shell = True
     else:
         destination_url = "http://archive.apache.org/dist/activemq/5.11.1/apache-activemq-5.11.1-bin.tar.gz"
+        is_shell = False
 
     print "Requiring ActiveMq version: " + broker_version
     activemq_home = os.path.join(CACHE_FOLDER, broker_version)
@@ -54,7 +56,6 @@ def main(command_word):
         os.rename(os.path.join(CACHE_FOLDER, "apache-activemq-"+broker_version), activemq_home)
 
     os.chmod(activemq_bin, 0x755)
-    print "Execute: " + activemq_bin
     conf_file = os.path.join(CONF_FOLDER, "activemq.xml")
 
     conf_file_java_uri = conf_file.replace("\\", "/")
@@ -62,19 +63,23 @@ def main(command_word):
     if command_word == "stop":
         extra_opts = ""
 
-    execute({'ACTIVEMQ_OPTS': parse_activemq_xml(conf_file)},
-            [activemq_bin, command_word, extra_opts])
+    proc = execute({'ACTIVEMQ_OPTS': parse_activemq_xml(conf_file)},
+            [activemq_bin, command_word, extra_opts], is_shell)
 
     if command_word == "start":
         jetty_xml = os.path.join(CONF_FOLDER, "jetty.xml")
         admin_port = parse_jetty_xml(jetty_xml)
         wait_until_port_is_open(admin_port, 5)
 
+    proc.wait()
+    sys.exit()
 
-def execute(my_env, command):
+
+def execute(my_env, command, is_shell):
     env_copy = os.environ.copy()
     env_copy.update(my_env)
-    subprocess.Popen(command, env=env_copy, shell=True)
+    print "Execute: " + " ".join(command)
+    return subprocess.Popen(command, env=env_copy, shell=is_shell)
 
 
 def extract_archive(archive, to_folder):
