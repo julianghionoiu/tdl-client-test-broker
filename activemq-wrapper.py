@@ -74,7 +74,7 @@ def main(command_word):
 def execute(my_env, command):
     env_copy = os.environ.copy()
     env_copy.update(my_env)
-    subprocess.Popen(command, env=env_copy)
+    subprocess.Popen(command, env=env_copy, shell=True)
 
 
 def extract_archive(archive, to_folder):
