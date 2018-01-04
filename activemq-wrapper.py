@@ -58,20 +58,24 @@ def main(command_word):
     os.chmod(activemq_bin, 0x755)
     conf_file = os.path.join(CONF_FOLDER, "activemq.xml")
 
-    conf_file_java_uri = conf_file.replace("\\", "/")
-    extra_opts = "xbean:file:" + conf_file_java_uri
-    if command_word == "stop":
-        extra_opts = ""
-
-    proc = execute({'ACTIVEMQ_OPTS': parse_activemq_xml(conf_file)},
-            [activemq_bin, command_word, extra_opts], is_shell)
-
+    jetty_xml = os.path.join(CONF_FOLDER, "jetty.xml")
+    admin_port = parse_jetty_xml(jetty_xml)
+    
     if command_word == "start":
-        jetty_xml = os.path.join(CONF_FOLDER, "jetty.xml")
-        admin_port = parse_jetty_xml(jetty_xml)
+        conf_file_java_uri = conf_file.replace("\\", "/")
+        extra_opts = "xbean:file:" + conf_file_java_uri
+        
+        proc = execute({'ACTIVEMQ_OPTS': parse_activemq_xml(conf_file)},
+            [activemq_bin, command_word, extra_opts], is_shell)
         wait_until_port_is_open(admin_port, 5)
-        proc.terminate()
 
+    if command_word == "stop":
+        proc = execute({}, [
+            activemq_admin_bin, command_word,
+            '--jmxurl', parse_activemq_xml_jmxurl(conf_file)], is_shell)
+        wait_until_port_is_closed(admin_port, 5)
+    
+    proc.terminate()
     proc.wait()
     sys.exit()
 
@@ -152,6 +156,20 @@ def wait_until_port_is_open(port, delay):
             print "Yes"
             return
         print "No. Retrying in " + str(delay) + " seconds"
+        n = n + 1
+        time.sleep(delay)
+
+
+def wait_until_port_is_closed(port, delay):
+    n = 0
+    while n < 5:
+        print "Is application listening on port " + str(port) + "? "
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('127.0.0.1', int(port)))
+        if result != 0:
+            print "No"
+            return
+        print "Yes. Retrying in " + str(delay) + " seconds"
         n = n + 1
         time.sleep(delay)
 
