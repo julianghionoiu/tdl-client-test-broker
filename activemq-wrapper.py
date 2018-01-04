@@ -41,6 +41,7 @@ def main(command_word):
     print "Requiring ActiveMq version: " + broker_version
     activemq_home = os.path.join(CACHE_FOLDER, broker_version)
     activemq_bin = os.path.join(activemq_home, "bin", "activemq")
+    activemq_admin_bin = os.path.join(activemq_home, "bin", "activemq-admin")
 
     if not os.path.isfile(activemq_bin):
         downloaded_file_name=destination_url[destination_url.rfind("/")+1:]
