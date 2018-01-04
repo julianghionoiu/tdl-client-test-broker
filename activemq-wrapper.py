@@ -126,6 +126,10 @@ def download_and_show_progress(url, file_name):
 
 
 def parse_activemq_xml(conf_file):
+    return "-Dactivemq.jmx.url=" + parse_activemq_xml_jmxurl(conf_file)
+
+
+def parse_activemq_xml_jmxurl(conf_file):
     tree = ET.ElementTree(file=conf_file)
     root = tree.getroot()
 
@@ -133,7 +137,7 @@ def parse_activemq_xml(conf_file):
         if "connectorHost" in managementContext.attrib:
             jmx_host = managementContext.attrib.get("connectorHost")
             jmx_port = managementContext.attrib.get("connectorPort")
-            return "-Dactivemq.jmx.url=service:jmx:rmi:///jndi/rmi://" + jmx_host + ":" + jmx_port + "/jmxrmi"
+            return "service:jmx:rmi:///jndi/rmi://" + jmx_host + ":" + jmx_port + "/jmxrmi"
 
 
 def parse_jetty_xml(jetty_xml):
