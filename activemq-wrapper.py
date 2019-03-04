@@ -103,7 +103,7 @@ def download_and_show_progress(url, file_name):
     u = urllib.request.urlopen(url)
     f = open(file_name, 'wb')
     meta = u.info()
-    file_size = int(meta.getheaders("Content-Length")[0])
+    file_size = int(meta.get_all("Content-Length")[0])
     print("Downloading: %s Bytes: %s" % (file_name, file_size))
 
     file_size_dl = 0
