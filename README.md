@@ -1,6 +1,11 @@
 # tdl-client-test-broker
 An ActiveMq broker to be used for testing the clients
 
+## Requirements
+
+- `Python 3.7` (support for `Python 2.x` has been dropped)
+- `pip` (ensure it supports `Python 3.7`)
+
 # Setup
 
 ```bash
@@ -20,7 +25,6 @@ popd
 # Commit
 git commit $BROKER_LOCATION -m "Added broker submodule"
 ```
-
 
 # Configure
 
