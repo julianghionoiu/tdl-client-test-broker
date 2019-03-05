@@ -121,7 +121,6 @@
         <transportConnectors>
             <!-- DOS protection, limit concurrent connections to 1000 and frame size to 100MB -->
             <transportConnector name="openwire" uri="tcp://localhost:21616?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
-            <transportConnector name="amqp" uri="amqp://localhost:25672?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
             <transportConnector name="stomp" uri="stomp://localhost:21613?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
             <transportConnector name="mqtt" uri="mqtt://localhost:21883?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
             <transportConnector name="ws" uri="ws://localhost:21614?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>

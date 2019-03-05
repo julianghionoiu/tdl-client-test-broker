@@ -17,7 +17,7 @@ CONF_FOLDER = os.path.join(SCRIPT_FOLDER, "conf")
 
 # ~~~~ The list of ports:  (see activemq.xml)
 # Openwire: 21616
-# AMQP:     25672
+# [DISABLED] AMQP:     25672
 # STOMP:    21613
 # MQTT:     21883
 # WS:       21614
