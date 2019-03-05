@@ -61,24 +61,26 @@ def main(command_word):
 
     jetty_xml = os.path.join(CONF_FOLDER, "jetty.xml")
     admin_port = parse_jetty_xml(jetty_xml)
-    
+
+    is_command_successful = False
     if command_word == "start":
         conf_file_java_uri = conf_file.replace("\\", "/")
         extra_opts = "xbean:file:" + conf_file_java_uri
         
         proc = execute({'ACTIVEMQ_OPTS': parse_activemq_xml(conf_file)},
             [activemq_bin, command_word, extra_opts], is_shell)
-        wait_until_port_is_open(admin_port, 5)
+        is_command_successful = wait_until_port_is_open(admin_port, 5)
 
     if command_word == "stop":
         proc = execute({}, [
             activemq_admin_bin, command_word,
             '--jmxurl', parse_activemq_xml_jmxurl(conf_file)], is_shell)
-        wait_until_port_is_closed(admin_port, 5)
+        is_command_successful = wait_until_port_is_closed(admin_port, 5)
     
     proc.terminate()
     proc.wait()
-    sys.exit()
+
+    sys.exit(0 if is_command_successful else 1)
 
 
 def execute(my_env, command, is_shell):
@@ -159,10 +161,11 @@ def wait_until_port_is_open(port, delay):
         result = sock.connect_ex(('127.0.0.1', int(port)))
         if result == 0:
             print("Yes")
-            return
+            return True
         print("No. Retrying in " + str(delay) + " seconds")
         n = n + 1
         time.sleep(delay)
+    return False
 
 
 def wait_until_port_is_closed(port, delay):
@@ -173,10 +176,11 @@ def wait_until_port_is_closed(port, delay):
         result = sock.connect_ex(('127.0.0.1', int(port)))
         if result != 0:
             print("No")
-            return
+            return True
         print("Yes. Retrying in " + str(delay) + " seconds")
         n = n + 1
         time.sleep(delay)
+    return False
 
 
 if __name__ == "__main__":
