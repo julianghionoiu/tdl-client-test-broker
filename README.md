@@ -3,8 +3,8 @@ An ActiveMq broker to be used for testing the clients
 
 ## Requirements
 
-- `Python 3.7` (support for `Python 2.x` has been dropped)
-- `pip` (ensure it supports `Python 3.7`)
+- `Python 3.10` (support for `Python 2.x` has been dropped)
+- `pip` (ensure it supports `Python 3.10`)
 
 # Setup
 

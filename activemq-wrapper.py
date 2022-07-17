@@ -9,6 +9,7 @@ import socket
 import platform
 import tarfile
 import zipfile
+import ssl
 
 
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__))
@@ -32,10 +33,10 @@ def main(command_word):
 
     broker_version = "5.11.1"
     if "Windows" in platform.system():
-        destination_url = "http://archive.apache.org/dist/activemq/5.11.1/apache-activemq-5.11.1-bin.zip"
+        destination_url = "https://archive.apache.org/dist/activemq/5.11.1/apache-activemq-5.11.1-bin.zip"
         is_shell = True
     else:
-        destination_url = "http://archive.apache.org/dist/activemq/5.11.1/apache-activemq-5.11.1-bin.tar.gz"
+        destination_url = "https://archive.apache.org/dist/activemq/5.11.1/apache-activemq-5.11.1-bin.tar.gz"
         is_shell = False
 
     print("Requiring ActiveMq version: " + broker_version)
@@ -102,7 +103,10 @@ def extract_archive(archive, to_folder):
 
 
 def download_and_show_progress(url, file_name):
-    u = urllib.request.urlopen(url)
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    u = urllib.request.urlopen(url, context=ctx)
     f = open(file_name, 'wb')
     meta = u.info()
     file_size = int(meta.get_all("Content-Length")[0])
